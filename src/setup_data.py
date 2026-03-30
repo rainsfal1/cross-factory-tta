@@ -5,15 +5,26 @@ SH17 (YOLO format) from kagglehub cache → data/sh17/{images,labels}/{train,val
 Pictor-PPE (VOC bbox format) from /tmp/pictor_extract → data/pictor_ppe/{images,labels}/test/
 """
 
+import argparse
 import os
 import shutil
 from pathlib import Path
 from PIL import Image
 
-SH17_CACHE = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
-PICTOR_SRC = Path("/tmp/pictor_extract/pictor-ppe")
 ROOT = Path(__file__).parent.parent
-DATA = ROOT / "data"
+DEFAULT_DATA = ROOT / "data"
+
+SH17_CACHE_DEFAULT = (
+    Path.home()
+    / ".cache"
+    / "kagglehub"
+    / "datasets"
+    / "mugheesahmad"
+    / "sh17-dataset-for-ppe-detection"
+    / "versions"
+    / "1"
+)
+PICTOR_SRC_DEFAULT = Path("/tmp/pictor_extract/pictor-ppe")
 
 
 # SH17: 17 classes
@@ -28,19 +39,19 @@ SH17_CLASSES = [
 PICTOR_CLASSES = ["helmet", "head", "person"]
 
 
-def setup_sh17():
+def setup_sh17(sh17_cache: Path = SH17_CACHE_DEFAULT, data_dir: Path = DEFAULT_DATA):
     """Move SH17 images and labels into data/sh17/ using train/val split files."""
     print("\n=== Setting up SH17 ===")
-    src_images = SH17_CACHE / "images"
-    src_labels = SH17_CACHE / "labels"
+    src_images = sh17_cache / "images"
+    src_labels = sh17_cache / "labels"
 
     for split in ("train", "val"):
-        out_images = DATA / "sh17" / "images" / split
-        out_labels = DATA / "sh17" / "labels" / split
+        out_images = data_dir / "sh17" / "images" / split
+        out_labels = data_dir / "sh17" / "labels" / split
         out_images.mkdir(parents=True, exist_ok=True)
         out_labels.mkdir(parents=True, exist_ok=True)
 
-        split_file = SH17_CACHE / f"{split}_files.txt"
+        split_file = sh17_cache / f"{split}_files.txt"
         filenames = split_file.read_text().splitlines()
         filenames = [f.strip() for f in filenames if f.strip()]
         print(f"  {split}: {len(filenames)} files")
@@ -58,8 +69,8 @@ def setup_sh17():
             if label_src.exists():
                 shutil.copy2(label_src, out_labels / f"{stem}.txt")
 
-    print(f"  SH17 train images: {len(list((DATA / 'sh17/images/train').glob('*')))}")
-    print(f"  SH17 val   images: {len(list((DATA / 'sh17/images/val').glob('*')))}")
+    print(f"  SH17 train images: {len(list((data_dir / 'sh17/images/train').glob('*')))}")
+    print(f"  SH17 val   images: {len(list((data_dir / 'sh17/images/val').glob('*')))}")
 
 
 def pictor_voc_to_yolo(line: str, img_w: int, img_h: int) -> list[str]:
@@ -83,15 +94,15 @@ def pictor_voc_to_yolo(line: str, img_w: int, img_h: int) -> list[str]:
     return yolo_lines
 
 
-def setup_pictor():
+def setup_pictor(pictor_src: Path = PICTOR_SRC_DEFAULT, data_dir: Path = DEFAULT_DATA):
     """Convert Pictor annotations to YOLO format and place in data/pictor_ppe/."""
     print("\n=== Setting up Pictor-PPE ===")
-    src_images = PICTOR_SRC / "Images"
+    src_images = pictor_src / "Images"
     # Use approach-01 test split (most commonly referenced in paper)
-    ann_file = PICTOR_SRC / "Labels" / "pictor_ppe_crowdsourced_approach-01_test.txt"
+    ann_file = pictor_src / "Labels" / "pictor_ppe_crowdsourced_approach-01_test.txt"
 
-    out_images = DATA / "pictor_ppe" / "images" / "test"
-    out_labels = DATA / "pictor_ppe" / "labels" / "test"
+    out_images = data_dir / "pictor_ppe" / "images" / "test"
+    out_labels = data_dir / "pictor_ppe" / "labels" / "test"
     out_images.mkdir(parents=True, exist_ok=True)
     out_labels.mkdir(parents=True, exist_ok=True)
 
@@ -128,14 +139,14 @@ def setup_pictor():
     print(f"  Pictor test images placed: {ok}  (skipped: {skipped})")
 
 
-def write_yamls():
+def write_yamls(data_dir: Path = DEFAULT_DATA):
     """Write dataset YAML config files."""
     print("\n=== Writing YAML configs ===")
 
     # SH17
-    sh17_yaml = DATA / "sh17" / "sh17.yaml"
+    sh17_yaml = data_dir / "sh17" / "sh17.yaml"
     sh17_yaml.write_text(f"""\
-path: {DATA / 'sh17'}
+path: {data_dir / 'sh17'}
 train: images/train
 val: images/val
 
@@ -144,9 +155,9 @@ names: {SH17_CLASSES}
 """)
 
     # Pictor (only 3 classes; we will remap to hard-hat + person for cross-domain eval)
-    pictor_yaml = DATA / "pictor_ppe" / "pictor.yaml"
+    pictor_yaml = data_dir / "pictor_ppe" / "pictor.yaml"
     pictor_yaml.write_text(f"""\
-path: {DATA / 'pictor_ppe'}
+path: {data_dir / 'pictor_ppe'}
 train: images/test   # no train split used
 val: images/test
 
@@ -159,9 +170,34 @@ names: {PICTOR_CLASSES}
 
 
 if __name__ == "__main__":
-    setup_sh17()
-    setup_pictor()
-    write_yamls()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--sh17-cache",
+        type=str,
+        default=None,
+        help="Folder matching kagglehub cache layout: images/, labels/, train_files.txt, val_files.txt",
+    )
+    parser.add_argument(
+        "--pictor-src",
+        type=str,
+        default=None,
+        help="Folder containing extracted Pictor dataset: Images/, Labels/, and pictor_ppe_crowdsourced_approach-01_test.txt",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=str,
+        default=str(DEFAULT_DATA),
+        help="Where to write data/{sh17,pictor_ppe}",
+    )
+    args = parser.parse_args()
+
+    data_dir = Path(args.out_dir)
+    sh17_cache = Path(args.sh17_cache) if args.sh17_cache else SH17_CACHE_DEFAULT
+    pictor_src = Path(args.pictor_src) if args.pictor_src else PICTOR_SRC_DEFAULT
+
+    setup_sh17(sh17_cache=sh17_cache, data_dir=data_dir)
+    setup_pictor(pictor_src=pictor_src, data_dir=data_dir)
+    write_yamls(data_dir=data_dir)
     print("\nDone. Verify with:")
     print("  ls data/sh17/images/train | wc -l")
     print("  ls data/pictor_ppe/images/test | wc -l")
