@@ -1,0 +1,27 @@
+# YOLOv8m training hyperparameters — SH17 source domain
+
+model: yolov8m.pt
+epochs: 50
+imgsz: 640
+batch: 16
+optimizer: SGD
+lr0: 0.01
+lrf: 0.01       # final lr = lr0 * lrf
+momentum: 0.937
+weight_decay: 0.0005
+warmup_epochs: 3
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+box: 7.5        # box loss weight
+cls: 0.5        # cls loss weight
+dfl: 1.5        # dfl loss weight
+hsv_h: 0.015    # augmentation
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 0.0
+translate: 0.1
+scale: 0.5
+flipud: 0.0
+fliplr: 0.5
+mosaic: 1.0
+mixup: 0.0
