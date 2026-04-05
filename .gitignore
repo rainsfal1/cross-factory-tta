@@ -11,6 +11,7 @@ venv/
 env/
 
 # Data (large files — keep yaml/metadata only)
+data/raw/
 data/**
 !data/sh17/sh17.yaml
 !data/pictor_ppe/pictor.yaml
