@@ -1,50 +1,82 @@
 # Cross-Factory Test-Time Adaptation (TTA) for PPE Detection
 
-This repository implements **Test-Time Adaptation (TTA)** using **TENT** for object detection, applied to safety PPE detection across industrial environments.
+Implements **Test-Time Adaptation (TTA)** using **TENT** for object detection, applied to safety PPE detection across industrial environments.
 
-The goal is to bridge the performance gap between a **source factory (SH17)** and a **target factory (Pictor-PPE, SHWD, CHV)** without retraining on labeled target data.
+Goal: bridge the performance gap between a **source factory (SH17)** and **target factories (Pictor-PPE, SHWD, CHV)** without retraining on labeled target data.
 
 ## Project Structure
 
-```text
+```
 cross-factory-tta/
+├── config.py                   # all paths, hyperparams, class mappings — edit this
+├── pyproject.toml              # uv project + dependencies
+│
+├── src/                        # reusable modules
+│   ├── data_setup.py           # dataset preparation + YAML generation
+│   ├── tent.py                 # TENT class + helpers
+│   ├── train.py                # training logic
+│   └── eval.py                 # baseline + TENT evaluation
+│
+├── scripts/                    # CLI entry points (SSH / local use)
+│   ├── prepare_data.py
+│   ├── train.py
+│   ├── eval_baseline.py
+│   └── eval_tent.py
 │
 ├── notebooks/
-│   ├── kaggle/                    # self-contained experiment notebooks (run on Kaggle)
+│   ├── kaggle/                 # self-contained notebook for Kaggle runs
 │   │   └── tta_experiment.ipynb
-│   └── scratch/                   # local throwaway analysis (gitignored)
+│   └── scratch/                # local throwaway analysis (gitignored)
 │
 ├── models/
-│   ├── runs.md                    # log: checkpoint → Kaggle run → results
-│   └── *.pt                       # downloaded model weights (gitignored)
+│   ├── runs.md                 # log: checkpoint → run → results
+│   └── *.pt                    # model weights (gitignored)
 │
-├── data/                          # datasets (gitignored except metadata)
-│   ├── sh17/
-│   ├── pictor_ppe/
-│   ├── shwd/
-│   ├── CHV_dataset/
+├── data/                       # datasets (gitignored except metadata)
 │   └── datasets.md
 │
-└── docs/                          # write-ups and visual examples
+└── docs/                       # write-ups and visual examples
 ```
 
-## Workflow
+## Workflows
 
-All training and evaluation runs on Kaggle with GPU. The notebook in `notebooks/kaggle/` is self-contained — it handles data prep, training, TTA, and evaluation end to end.
+### SSH / Local (GPU machine)
 
-1. Open the notebook on Kaggle and attach the relevant dataset inputs
-2. Run with **Save & Run All** (version history acts as the experiment log)
-3. Download the output `.pt` checkpoint
-4. Drop it in `models/` locally and log the run in `models/runs.md`
+Raw datasets live on the mounted data disk. All working output (prepared data, checkpoints, eval results) goes to `/mnt/data/cross-factory-tta/`.
+
+**1. Configure paths**
+
+Edit [config.py](config.py) — set `SH17_DIR`, `PICTOR_DIR`, etc. to where your raw data is.
+
+**2. Set up environment**
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e .
+```
+
+**3. Run**
+
+```bash
+uv run python scripts/prepare_data.py   # organise datasets + write YAMLs
+uv run python scripts/train.py          # train YOLOv8m on SH17
+uv run python scripts/eval_baseline.py  # zero-shot eval on all target domains
+uv run python scripts/eval_tent.py      # TENT adaptation on Pictor-PPE
+```
+
+### Kaggle
+
+The notebook in `notebooks/kaggle/` is fully self-contained — no imports from `src/`. Edit the config section at the top of the notebook for paths and platform, then run with **Save & Run All**.
 
 ## Datasets
 
-| Dataset | Role | Classes |
-|---------|------|---------|
-| SH17 | Source (train) | 17-class PPE |
-| Pictor-PPE | Target (eval) | hard_hat / no_hard_hat / person |
-| SHWD | Target (eval) | hard_hat / person |
-| CHV | Target (eval) | hard_hat / no_hard_hat / person |
+| Dataset    | Role            | Classes                              |
+|------------|-----------------|--------------------------------------|
+| SH17       | Source (train)  | 17-class PPE                         |
+| Pictor-PPE | Target (eval)   | hard_hat / no_hard_hat / person      |
+| SHWD       | Target (eval)   | hard_hat / person                    |
+| CHV        | Target (eval)   | hard_hat / no_hard_hat / person      |
 
 Canonical label mapping used across all target datasets:
 
