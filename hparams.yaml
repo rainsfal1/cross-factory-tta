@@ -5,17 +5,17 @@ run_name: sh17_yolov8m
 pretrained_weights: null
 
 train:
-  # Hardware — V100 32GB, 128-core CPU
+  # Hardware — V100 32GB, 128-core CPU, 377GB RAM
   device: 0
-  batch: 32
-  workers: 16
-  amp: true
+  batch: 64       # V100 32GB handles YOLOv8m@640 comfortably at 64
+  workers: 32     # safe with 128 cores and ample RAM
+  amp: true       # V100 Tensor Cores, use fp16
 
   # Schedule
   epochs: 50
   imgsz: 640
   optimizer: SGD
-  lr0: 0.02
+  lr0: 0.02       # above YOLO default (0.01); warmup_epochs=3 keeps early training stable
   lrf: 0.01
   warmup_epochs: 3
   momentum: 0.937
@@ -44,7 +44,9 @@ tent:
   steps: 1
 
 eval:
+  device: 0
+  half: false
   imgsz: 640
-  batch: 32
+  batch: 64
   conf: 0.001
   iou: 0.6

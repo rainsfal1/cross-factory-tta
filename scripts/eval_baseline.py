@@ -13,22 +13,46 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import config
 from src.hparams import load
-from src.eval import run_baseline_eval
+from src.eval import run_baseline_eval, run_sh17_sanity
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--hparams", default=None, help="Path to hparams yaml (default: hparams.yaml)")
+parser.add_argument("--hparams", default=None)
 args = parser.parse_args()
 
 hp = load(args.hparams)
 best_weights = config.RUNS_DIR / "train" / hp["run_name"] / "weights" / "best.pt"
 
 if not best_weights.exists():
-    print(f"[ERROR] No weights found at {best_weights}. Train first.")
+    print(f"ERROR: no weights at {best_weights}")
     sys.exit(1)
+
+W = 46
+print()
+print(f"  Source Domain Verification  |  SH17 val")
+print(f"  {'=' * W}")
+print(f"  {'Dataset':<16} {'mAP50':>9}  {'mAP50-95':>10}  {'Status':>8}")
+print(f"  {'-' * W}")
+
+sanity = run_sh17_sanity(best_weights, hp)
+status = "OK" if sanity["mAP50"] >= 0.70 else "WARN: unexpectedly low"
+print(f"  {'sh17 (val)':<16} {sanity['mAP50']:>9.4f}  {sanity['mAP50_95']:>10.4f}  {status:>8}")
+print(f"  {'=' * W}")
+
+print()
+print(f"  Baseline Evaluation  |  {hp['run_name']}")
+print(f"  {'=' * W}")
+print(f"  {'Dataset':<16} {'mAP50':>9}  {'mAP50-95':>10}")
+print(f"  {'-' * W}")
 
 results = run_baseline_eval(best_weights, hp)
 
-print(f"\n{'Dataset':<14} {'mAP50':>10} {'mAP50-95':>12}")
-print("-" * 38)
+print(f"  {'-' * W}")
 for ds, r in results.items():
-    print(f"{ds:<14} {r['mAP50']:>10.4f} {r['mAP50_95']:>12.4f}")
+    print(f"  {ds:<16} {r['mAP50']:>9.4f}  {r['mAP50_95']:>10.4f}")
+
+mean50    = sum(r["mAP50"]    for r in results.values()) / len(results)
+mean5095  = sum(r["mAP50_95"] for r in results.values()) / len(results)
+print(f"  {'-' * W}")
+print(f"  {'Mean':<16} {mean50:>9.4f}  {mean5095:>10.4f}")
+print(f"  {'=' * W}")
+print()
