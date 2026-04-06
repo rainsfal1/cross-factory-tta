@@ -33,3 +33,5 @@ results/
 # Notebooks scratch
 notebooks/scratch/**
 !notebooks/scratch/.gitkeep
+.venv/
+.venv/
