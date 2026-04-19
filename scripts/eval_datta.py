@@ -147,7 +147,8 @@ for ds_name in DOMAINS:
     if use_stage2:
         print(f"  stage 2 adapting...", end=" ", flush=True)
         for bi, x in enumerate(batches):
-            adapter.adapt(x, _debug=(args.debug and bi < 2 and ds_name == DOMAINS[0]))
+            # debug: first batch, first step only — so we get one print per domain
+            adapter.adapt(x, _debug=(args.debug and bi == 0))
         print("done")
 
     # ── Evaluation ────────────────────────────────────────────────────────────

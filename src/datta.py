@@ -156,13 +156,31 @@ class DATTA:
                     total = mask.numel()
                     passed = int(mask.sum())
                     pct = 100.0 * passed / max(total, 1)
+                    # Argmax class distribution — specifically the 3 eval classes in SH17
+                    # indexing: 4=hard_hat, 9=no_hard_hat, 16=person
+                    argmax_cls = cls_logits.argmax(dim=-1)  # [B, anchors]
+                    flat_argmax = argmax_cls.flatten()
+                    flat_conf = conf.flatten()
                     print(f"  [DATTA debug] B={scores.shape[0]}  "
                           f"anchors_per_img={total // scores.shape[0]}  "
                           f"passed={passed}/{total} ({pct:.2f}%)  "
-                          f"conf: max={float(conf.max()):.3f} "
-                          f"mean={float(conf.mean()):.3f} "
-                          f"p95={float(conf.flatten().topk(max(1, total//20)).values[-1]):.3f}  "
+                          f"conf: max={float(conf.max().detach()):.3f} "
+                          f"mean={float(conf.mean().detach()):.3f} "
                           f"thr={self.conf_threshold}")
+                    # per-eval-class argmax counts and conf stats (with detach)
+                    for cls_idx, cls_name in [(4, "hard_hat"), (9, "no_hard_hat"), (16, "person")]:
+                        cls_mask = flat_argmax == cls_idx
+                        n = int(cls_mask.sum())
+                        if n > 0:
+                            cls_confs = flat_conf[cls_mask].detach()
+                            n_high = int((cls_confs > 0.1).sum())
+                            print(f"    cls {cls_idx:>2} {cls_name:<12}  "
+                                  f"argmax={n:>5}/{total}  "
+                                  f"conf: max={float(cls_confs.max()):.3f} "
+                                  f"mean={float(cls_confs.mean()):.3f}  "
+                                  f"n(conf>0.1)={n_high}")
+                        else:
+                            print(f"    cls {cls_idx:>2} {cls_name:<12}  argmax=    0/{total}  — NEVER predicted")
                 if not mask.any():
                     return None
                 return (conf[mask] * entropy[mask]).mean()
@@ -193,9 +211,9 @@ class DATTA:
         """
         if not self.use_stage2:
             return
-        for _ in range(self.steps):
+        for step_i in range(self.steps):
             preds = self._orig_forward(x, augment=False)
-            loss = self._detection_aware_loss(preds, _debug=_debug)
+            loss = self._detection_aware_loss(preds, _debug=(_debug and step_i == 0))
             if loss is None:
                 continue
             self.optimizer.zero_grad()
