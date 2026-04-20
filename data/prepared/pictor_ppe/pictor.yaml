@@ -1,0 +1,6 @@
+path: /home4/dll_user3/code/tta-research/data/prepared/pictor_ppe
+train: images/test
+val: images/test
+
+nc: 3
+names: ['hard_hat', 'no_hard_hat', 'person']

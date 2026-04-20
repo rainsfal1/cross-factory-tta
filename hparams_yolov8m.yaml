@@ -1,0 +1,81 @@
+run_name: sh17_yolov8m
+
+pretrained_weights: null
+model: models/yolov8m.pt
+
+train:
+  device: "0,2,3"   # DDP across 3 free A10s; GPU 1 is in use by another job
+  batch: 144        # 48 per GPU × 3; ~9GB used at batch=72, so 48/GPU is safe on 22.5GB A10
+  workers: 4        # 4/GPU × 3 = 12 total; proven optimal — GPU is 13x slower than dataloader
+  amp: true
+
+  epochs: 100
+  imgsz: 640
+  optimizer: SGD
+  lr0: 0.01          # original tuned value — SGD+momentum doesn't benefit from linear LR scaling
+  lrf: 0.01
+  warmup_epochs: 3
+  momentum: 0.937
+  weight_decay: 0.0005
+
+  box: 7.5
+  cls: 0.5
+  dfl: 1.5
+
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  translate: 0.1
+  scale: 0.5
+  fliplr: 0.5
+  mosaic: 1.0
+
+  verbose: false
+  exist_ok: true
+
+tent:
+  lr: 0.005        # starting point — sweep found steps=5, lr=0.01 → +28% on pictor_ppe
+  steps: 10
+  adapt_batch: 16
+  pin_tensors: true
+
+sweep:
+  steps: [1, 5, 10]
+  lr: [0.001, 0.005, 0.01]
+
+dua:
+  decay_factor: 0.94
+  min_momentum_constant: 0.005
+  mom_pre: 0.1
+  n_augments: 64          # paper default; reduce to 16 if VRAM is tight at 640px
+
+sar:
+  lr: 0.00025             # paper default (much lower than TENT — SAM is more aggressive)
+  steps: 1
+  rho: 0.05               # SAM perturbation radius
+  e_margin: 2.0           # sweep candidate — observed target entropy ~1.75-2.04; paper formula 0.4*ln(17)=1.145 silences everything
+  reset_constant: 0.2     # fraction of EMA loss deviation that triggers reset
+
+eata:
+  lr: 0.001               # same as TENT
+  steps: 1
+  e_margin: 2.454         # log(1000)/2 - 1 — paper default, above observed target entropy so samples pass
+  d_margin: 0.05          # cosine similarity threshold for redundancy filtering
+  fisher_alpha: 2000.0    # EWC regularization strength (0 = disable Fisher penalty)
+  fisher_n_images: 200    # source images to use for Fisher diagonal estimation
+
+datta:
+  lr: 0.01           # SGD lr for Stage 2 BN affine params (same as TENT offline best start)
+  steps: 5
+  alpha: 0.9          # BN warmup mix: 1.0=source only (no-op), 0.0=pure target (= DUA)
+  conf_threshold: 0.05  # min max-class-prob for anchor to contribute to Stage 2 loss
+
+eval:
+  device: 0
+  half: true
+  imgsz: 640
+  batch: 64
+  workers: 4
+  conf: 0.001
+  iou: 0.6
+  sanity_thresh: 0.60   # minimum SH17 val mAP50 to consider weights valid

@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Claude Code session files
+.claude/
+
+# === DATA ===
+# Raw download dirs (reconstruct via scripts/data/download_datasets.py)
+data/raw/
+data/sh17/
+data/shwd/
+data/pictor_ppe/
+
+# CHV raw source — prepared version lives in data/prepared/chv/
+data/chv/
+
+# Prepared SH17 (14 GB images + 8 K label files; too large)
+data/prepared/sh17/
+
+# Dataset images in prepared splits (reconstruct from raw sources)
+data/prepared/*/images/
+
+# Ultralytics label cache files (auto-generated at runtime)
+**/*.cache
+
+# === MODEL WEIGHTS ===
+# Base pretrained weights (download from ultralytics/hub)
+*.pt
+*.onnx
+models/
+# Exception: our fine-tuned checkpoint
+!runs/train/*/weights/best.pt
+
+# === RUN ARTIFACTS ===
+# Temporary class-remapping workspace
+runs/tmp_remap/
+
+# Per-eval batch visualisation dumps (large, reproducible)
+runs/eval/
+
+# === OS / IDE ===
+.DS_Store
+.vscode/
+.idea/
+
+# Notebooks scratch
+notebooks/scratch/**
+!notebooks/scratch/.gitkeep

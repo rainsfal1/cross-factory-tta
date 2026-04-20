@@ -1,0 +1,49 @@
+{
+  "run_name": "grounding_dino_base",
+  "model": "IDEA-Research/grounding-dino-base",
+  "class_prompts": [
+    "hard hat",
+    "no hard hat",
+    "person"
+  ],
+  "timestamp": "2026-04-19T16:55:33.904213",
+  "threshold": 0.001,
+  "text_threshold": 0.25,
+  "nms_iou": 0.6,
+  "pictor_ppe": {
+    "mAP50": 0.26983562430916636,
+    "mAP50_95": 0.17744716475480574,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.13151503829628247,
+    "hard_hat_AP50_95": 0.058013807507125335,
+    "no_hard_hat_AP50": 0.001704534054111432,
+    "no_hard_hat_AP50_95": 0.0006655029103616383,
+    "person_AP50": 0.6762873005771052,
+    "person_AP50_95": 0.47366218384693026
+  },
+  "shwd": {
+    "mAP50": 0.020916266840457987,
+    "mAP50_95": 0.004275667242658608,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.0623627037631346,
+    "hard_hat_AP50_95": 0.01274194098450381,
+    "no_hard_hat_AP50": 0.0,
+    "no_hard_hat_AP50_95": 0.0,
+    "person_AP50": 0.00038609675823936463,
+    "person_AP50_95": 8.506074347201202e-05
+  },
+  "chv": {
+    "mAP50": 0.1522769032214791,
+    "mAP50_95": 0.07590880926455895,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.08525852585258525,
+    "hard_hat_AP50_95": 0.0537436265920979,
+    "no_hard_hat_AP50": 0.0,
+    "no_hard_hat_AP50_95": 0.0,
+    "person_AP50": 0.3715721838118521,
+    "person_AP50_95": 0.17398280120157894
+  }
+}

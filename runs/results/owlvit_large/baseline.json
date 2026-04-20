@@ -1,0 +1,48 @@
+{
+  "run_name": "owlvit_large",
+  "model": "google/owlvit-large-patch14",
+  "class_prompts": [
+    "hard hat",
+    "no hard hat",
+    "person"
+  ],
+  "timestamp": "2026-04-19T17:40:24.541279",
+  "threshold": 0.001,
+  "nms_iou": 0.6,
+  "pictor_ppe": {
+    "mAP50": 0.5669334318435245,
+    "mAP50_95": 0.3737043317871726,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.7975229077973818,
+    "hard_hat_AP50_95": 0.4761457546433879,
+    "no_hard_hat_AP50": 4.133449804763388e-05,
+    "no_hard_hat_AP50_95": 4.133449804763388e-05,
+    "person_AP50": 0.9032360532351439,
+    "person_AP50_95": 0.6449259062200822
+  },
+  "shwd": {
+    "mAP50": 0.16051702257134157,
+    "mAP50_95": 0.031935530465659244,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.45979040708461005,
+    "hard_hat_AP50_95": 0.08971333846618271,
+    "no_hard_hat_AP50": 0.0,
+    "no_hard_hat_AP50_95": 0.0,
+    "person_AP50": 0.021760660629414636,
+    "person_AP50_95": 0.006093252930795023
+  },
+  "chv": {
+    "mAP50": 0.5619411356544064,
+    "mAP50_95": 0.2708260675698572,
+    "precision": null,
+    "recall": null,
+    "hard_hat_AP50": 0.9096470217002223,
+    "hard_hat_AP50_95": 0.47450228890814394,
+    "no_hard_hat_AP50": 0.0,
+    "no_hard_hat_AP50_95": 0.0,
+    "person_AP50": 0.7761763852629969,
+    "person_AP50_95": 0.3379759138014278
+  }
+}
